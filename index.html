@@ -1,738 +1,153 @@
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stok Takip Paneli</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
-        * {
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #f9fafb;
-            color: #111827;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 24px;
-        }
-
-        .header {
-            margin-bottom: 32px;
-        }
-
-        .header h1 {
-            font-size: 2rem;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #111827;
-        }
-
-        .header p {
-            color: #6b7280;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-
-        .stat-card {
+        .login, .panel {
+            max-width: 600px;
+            margin: 50px auto;
             background: white;
             padding: 24px;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e5e7eb;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
-
-        .stat-card-content {
-            display: flex;
-            align-items: center;
-        }
-
-        .stat-icon {
-            width: 32px;
-            height: 32px;
-            margin-right: 16px;
-        }
-
-        .stat-info h3 {
-            font-size: 0.875rem;
-            color: #6b7280;
-            margin-bottom: 4px;
-        }
-
-        .stat-info p {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #111827;
-        }
-
-        .filters {
-            background: white;
-            padding: 24px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e5e7eb;
-            margin-bottom: 24px;
-        }
-
-        .filters h2 {
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: #111827;
-        }
-
-        .filter-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
+        h2 {
             margin-bottom: 16px;
         }
-
-        .filter-input, .filter-select {
+        input, button, select {
+            padding: 8px;
+            margin: 4px 0;
+            font-size: 1rem;
+        }
+        table {
             width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 0.875rem;
-        }
-
-        .filter-input:focus, .filter-select:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-        }
-
-        .search-input {
-            position: relative;
-        }
-
-        .search-input input {
-            padding-left: 36px;
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 16px;
-            height: 16px;
-            color: #9ca3af;
-        }
-
-        .toggle-button {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            background: #f9fafb;
-            cursor: pointer;
-            font-size: 0.875rem;
-            transition: all 0.2s;
-        }
-
-        .toggle-button.active {
-            background: #fef3c7;
-            border-color: #f59e0b;
-            color: #92400e;
-        }
-
-        .clear-filters {
-            color: #6b7280;
-            font-size: 0.875rem;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .clear-filters:hover {
-            color: #374151;
-        }
-
-        .table-container {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e5e7eb;
-            overflow: hidden;
-        }
-
-        .table {
-            width: 100%;
+            margin-top: 20px;
             border-collapse: collapse;
         }
-
-        .table th {
-            background: #f9fafb;
-            padding: 16px;
+        th, td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
             text-align: left;
-            font-size: 0.75rem;
-            font-weight: 500;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border-bottom: 1px solid #e5e7eb;
         }
-
-        .table td {
-            padding: 16px;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 0.875rem;
-        }
-
-        .table tr:hover {
-            background: #f9fafb;
-        }
-
-        .stock-badge {
-            display: inline-flex;
-            padding: 4px 8px;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .stock-badge.high {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .stock-badge.low {
-            background: #fed7aa;
-            color: #9a3412;
-        }
-
-        .stock-badge.out {
-            background: #fecaca;
-            color: #991b1b;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            padding: 16px;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        .pagination button {
-            padding: 8px 12px;
-            border: 1px solid #d1d5db;
-            background: white;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.875rem;
-        }
-
-        .pagination button:hover:not(:disabled) {
-            background: #f9fafb;
-        }
-
-        .pagination button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .pagination button.active {
-            background: #3b82f6;
-            border-color: #3b82f6;
-            color: white;
-        }
-
-        .sort-controls {
-            background: white;
-            padding: 16px 24px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e5e7eb;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .sort-select, .sort-button {
-            padding: 4px 8px;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
-            font-size: 0.875rem;
-        }
-
-        .sort-button {
-            background: #f3f4f6;
-            cursor: pointer;
-        }
-
-        .sort-button:hover {
-            background: #e5e7eb;
-        }
-
-        .file-upload {
-            margin-bottom: 24px;
-            padding: 16px;
-            border: 2px dashed #d1d5db;
-            border-radius: 8px;
-            text-align: center;
-            background: white;
-        }
-
-        .file-upload input {
-            margin: 8px 0;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 16px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .filter-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .table-container {
-                overflow-x: auto;
-            }
-            
-            .table {
-                min-width: 600px;
-            }
+        .actions button {
+            margin: 0 2px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Başlık -->
-        <div class="header">
-            <h1>Stok Takip Paneli</h1>
-            <p>Ürün stoklarınızı takip edin ve yönetin</p>
-        </div>
 
-        <!-- CSV Yükleme -->
-        <div class="file-upload">
-            <h3>CSV Dosyası Yükleyin</h3>
-            <p>Stok verilerinizi içeren CSV dosyasını seçin</p>
-            <input type="file" id="csvFile" accept=".csv" />
-            <p style="font-size: 0.8rem; color: #6b7280; margin-top: 8px;">
-                Format: Model;Beden;Renk;Adet
-            </p>
-        </div>
+<div class="login" id="loginScreen">
+    <h2>Giriş Yap</h2>
+    <input type="text" id="username" placeholder="Kullanıcı Adı"><br>
+    <input type="password" id="password" placeholder="Şifre"><br>
+    <button onclick="login()">Giriş</button>
+    <p id="loginError" style="color:red;"></p>
+</div>
 
-        <!-- İstatistikler -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-card-content">
-                    <svg class="stat-icon" style="color: #3b82f6;" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 01-1.414-1.414L13.586 5H12z" clip-rule="evenodd" />
-                    </svg>
-                    <div class="stat-info">
-                        <h3>Toplam Ürün</h3>
-                        <p id="totalProducts">0</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-card-content">
-                    <svg class="stat-icon" style="color: #10b981;" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                    </svg>
-                    <div class="stat-info">
-                        <h3>Toplam Stok</h3>
-                        <p id="totalStock">0</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-card-content">
-                    <svg class="stat-icon" style="color: #f59e0b;" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                    <div class="stat-info">
-                        <h3>Düşük Stok</h3>
-                        <p id="lowStock">0</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-card-content">
-                    <svg class="stat-icon" style="color: #ef4444;" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                    <div class="stat-info">
-                        <h3>Tükenen</h3>
-                        <p id="outOfStock">0</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Filtreler -->
-        <div class="filters">
-            <h2>Filtreler</h2>
-            <div class="filter-grid">
-                <div class="search-input">
-                    <svg class="search-icon" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                    </svg>
-                    <input type="text" id="searchInput" class="filter-input" placeholder="Ürün ara...">
-                </div>
-                
-                <select id="modelFilter" class="filter-select">
-                    <option value="">Tüm Modeller</option>
-                </select>
-                
-                <select id="sizeFilter" class="filter-select">
-                    <option value="">Tüm Bedenler</option>
-                </select>
-                
-                <select id="colorFilter" class="filter-select">
-                    <option value="">Tüm Renkler</option>
-                </select>
-                
-                <input type="number" id="minStockInput" class="filter-input" placeholder="Min. stok">
-                
-                <button id="lowStockToggle" class="toggle-button">
-                    <span>Düşük Stok</span>
-                </button>
-            </div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <a href="#" class="clear-filters" onclick="clearFilters()">Filtreleri Temizle</a>
-                <span id="resultCount" style="font-size: 0.875rem; color: #6b7280;">0 ürün gösteriliyor</span>
-            </div>
-        </div>
-
-        <!-- Sıralama -->
-        <div class="sort-controls">
-            <span style="font-weight: 500; color: #374151;">Sırala:</span>
-            <select id="sortBy" class="sort-select">
-                <option value="model">Model</option>
-                <option value="size">Beden</option>
-                <option value="color">Renk</option>
-                <option value="quantity">Stok Adedi</option>
-            </select>
-            <button id="sortOrder" class="sort-button" onclick="toggleSortOrder()">↑ Artan</button>
-        </div>
-
-        <!-- Tablo -->
-        <div class="table-container">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Model</th>
-                        <th>Beden</th>
-                        <th>Renk</th>
-                        <th>Stok Adedi</th>
-                        <th>Durum</th>
-                    </tr>
-                </thead>
-                <tbody id="productTable">
-                    <tr>
-                        <td colspan="5" style="text-align: center; padding: 40px; color: #6b7280;">
-                            CSV dosyası yükleyin veya bekleyin...
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <div class="pagination" id="pagination" style="display: none;">
-                <!-- Sayfalama butonları buraya eklenecek -->
-            </div>
-        </div>
+<div class="panel" id="stockPanel" style="display:none;">
+    <h2>Stok Takip Paneli</h2>
+    <div>
+        <input type="text" id="model" placeholder="Model">
+        <input type="text" id="size" placeholder="Beden">
+        <input type="text" id="color" placeholder="Renk">
+        <input type="number" id="quantity" placeholder="Adet" min="1">
+        <button onclick="addProduct()">Ekle</button>
+        <button onclick="clearAll()" style="float:right;background:#f87171;">Tümünü Sıfırla</button>
     </div>
+    <table id="stockTable">
+        <thead>
+            <tr>
+                <th>Model</th>
+                <th>Beden</th>
+                <th>Renk</th>
+                <th>Adet</th>
+                <th>İşlem</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
 
-    <script>
-        let allProducts = [];
-        let filteredProducts = [];
-        let currentPage = 1;
-        const itemsPerPage = 20;
-        let sortBy = 'model';
-        let sortOrder = 'asc';
+<script>
+    const USERNAME = "admin12";
+    const PASSWORD = "kahraman12";
 
-        // CSV dosyası yükleme
-        document.getElementById('csvFile').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                Papa.parse(file, {
-                    header: false,
-                    skipEmptyLines: true,
-                    complete: function(results) {
-                        parseCSVData(results.data);
-                    }
-                });
-            }
-        });
-
-        // Örnek veri yükleme (CSV yüklenmezse)
-        window.addEventListener('load', function() {
-            setTimeout(() => {
-                if (allProducts.length === 0) {
-                    loadSampleData();
-                }
-            }, 1000);
-        });
-
-        function parseCSVData(data) {
-            // İlk satırı başlık olarak atla, boş satırları filtrele
-            const productData = data.slice(1).filter(row => row.length >= 4 && row[0].trim());
-            
-            allProducts = productData.map((row, index) => ({
-                id: index + 1,
-                model: row[0]?.trim() || '',
-                size: row[1]?.trim() || '',
-                color: row[2]?.trim() || '',
-                quantity: parseInt(row[3]) || 0
-            })).filter(product => product.model);
-
-            updateFilters();
-            applyFilters();
-            updateStats();
+    function login() {
+        const user = document.getElementById("username").value;
+        const pass = document.getElementById("password").value;
+        if (user === USERNAME && pass === PASSWORD) {
+            document.getElementById("loginScreen").style.display = "none";
+            document.getElementById("stockPanel").style.display = "block";
+            loadProducts();
+        } else {
+            document.getElementById("loginError").textContent = "Hatalı kullanıcı adı veya şifre!";
         }
+    }
 
-        function loadSampleData() {
-            allProducts = [
-                { id: 1, model: 'Bursa Biyeli Palatzo Takım', size: 'L', color: 'Siyah', quantity: 1 },
-                { id: 2, model: 'Bursa Biyeli Palatzo Takım', size: 'M', color: 'Siyah', quantity: 5 },
-                { id: 3, model: 'Bursa Biyeli Palatzo Takım', size: 'S', color: 'Siyah', quantity: 1 },
-                { id: 4, model: 'Bursa Biyeli Palatzo Takım', size: 'XL', color: 'Siyah', quantity: 8 },
-                { id: 5, model: 'Dilek Elbise ZP', size: 'L', color: 'Bulut', quantity: 2 },
-                { id: 6, model: 'Dilek Elbise ZP', size: 'L', color: 'Ekru', quantity: 2 },
-                { id: 7, model: 'OSM İtalyan Gömlek Elbise', size: '1', color: 'Yeşil', quantity: 11 },
-                { id: 8, model: 'OSM İtalyan Gömlek Elbise', size: '1', color: 'Lacivert', quantity: 11 },
-                { id: 9, model: 'Pan Takım Vale', size: '1', color: 'Siyah', quantity: 5 },
-                { id: 10, model: 'ZP Salaş Penye', size: 'L', color: 'Zebra', quantity: 5 }
-            ];
-            
-            updateFilters();
-            applyFilters();
-            updateStats();
-        }
-
-        function updateFilters() {
-            const models = [...new Set(allProducts.map(p => p.model))].sort();
-            const sizes = [...new Set(allProducts.map(p => p.size))].sort();
-            const colors = [...new Set(allProducts.map(p => p.color))].sort();
-
-            updateSelectOptions('modelFilter', models);
-            updateSelectOptions('sizeFilter', sizes);
-            updateSelectOptions('colorFilter', colors);
-        }
-
-        function updateSelectOptions(selectId, options) {
-            const select = document.getElementById(selectId);
-            const currentValue = select.value;
-            
-            // Mevcut seçenekleri temizle (ilk seçenek hariç)
-            while (select.children.length > 1) {
-                select.removeChild(select.lastChild);
-            }
-            
-            // Yeni seçenekleri ekle
-            options.forEach(option => {
-                const optionElement = document.createElement('option');
-                optionElement.value = option;
-                optionElement.textContent = option;
-                select.appendChild(optionElement);
-            });
-            
-            // Önceki değeri geri yükle
-            select.value = currentValue;
-        }
-
-        function applyFilters() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const modelFilter = document.getElementById('modelFilter').value;
-            const sizeFilter = document.getElementById('sizeFilter').value;
-            const colorFilter = document.getElementById('colorFilter').value;
-            const minStock = parseInt(document.getElementById('minStockInput').value) || 0;
-            const showLowStock = document.getElementById('lowStockToggle').classList.contains('active');
-
-            filteredProducts = allProducts.filter(product => {
-                const matchesSearch = product.model.toLowerCase().includes(searchTerm) || 
-                                    product.color.toLowerCase().includes(searchTerm);
-                const matchesModel = !modelFilter || product.model === modelFilter;
-                const matchesSize = !sizeFilter || product.size === sizeFilter;
-                const matchesColor = !colorFilter || product.color === colorFilter;
-                const matchesMinStock = product.quantity >= minStock;
-                const matchesLowStock = !showLowStock || product.quantity <= 5;
-
-                return matchesSearch && matchesModel && matchesSize && matchesColor && matchesMinStock && matchesLowStock;
-            });
-
-            // Sıralama uygula
-            filteredProducts.sort((a, b) => {
-                let aVal = a[sortBy];
-                let bVal = b[sortBy];
-                
-                if (typeof aVal === 'string') {
-                    aVal = aVal.toLowerCase();
-                    bVal = bVal.toLowerCase();
-                }
-                
-                if (sortOrder === 'asc') {
-                    return aVal > bVal ? 1 : -1;
-                } else {
-                    return aVal < bVal ? 1 : -1;
-                }
-            });
-
-            currentPage = 1;
-            renderTable();
-            renderPagination();
-            document.getElementById('resultCount').textContent = `${filteredProducts.length} ürün gösteriliyor`;
-        }
-
-        function renderTable() {
-            const tbody = document.getElementById('productTable');
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const pageProducts = filteredProducts.slice(startIndex, endIndex);
-
-            if (pageProducts.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" style="text-align: center; padding: 40px; color: #6b7280;">
-                            Hiç ürün bulunamadı
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-
-            tbody.innerHTML = pageProducts.map(product => `
-                <tr>
-                    <td style="font-weight: 500;">${product.model}</td>
-                    <td>${product.size}</td>
-                    <td>${product.color}</td>
-                    <td style="font-weight: 600;">${product.quantity}</td>
-                    <td>
-                        <span class="stock-badge ${getStockBadgeClass(product.quantity)}">
-                            ${getStockStatus(product.quantity)}
-                        </span>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function renderPagination() {
-            const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-            const pagination = document.getElementById('pagination');
-            
-            if (totalPages <= 1) {
-                pagination.style.display = 'none';
-                return;
-            }
-            
-            pagination.style.display = 'flex';
-            
-            let paginationHTML = `
-                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
-                    Önceki
-                </button>
+    function loadProducts() {
+        const data = JSON.parse(localStorage.getItem("stockData") || "[]");
+        const tbody = document.querySelector("#stockTable tbody");
+        tbody.innerHTML = "";
+        data.forEach((p, i) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${p.model}</td>
+                <td>${p.size}</td>
+                <td>${p.color}</td>
+                <td>${p.quantity}</td>
+                <td class="actions">
+                    <button onclick="changeQty(${i}, 1)">➕</button>
+                    <button onclick="changeQty(${i}, -1)">➖</button>
+                    <button onclick="removeProduct(${i})">🗑</button>
+                </td>
             `;
-            
-            for (let i = 1; i <= Math.min(5, totalPages); i++) {
-                paginationHTML += `
-                    <button onclick="changePage(${i})" ${currentPage === i ? 'class="active"' : ''}>
-                        ${i}
-                    </button>
-                `;
-            }
-            
-            paginationHTML += `
-                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
-                    Sonraki
-                </button>
-            `;
-            
-            pagination.innerHTML = paginationHTML;
-        }
-
-        function changePage(page) {
-            const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-            if (page >= 1 && page <= totalPages) {
-                currentPage = page;
-                renderTable();
-                renderPagination();
-            }
-        }
-
-        function updateStats() {
-            const totalProducts = allProducts.length;
-            const totalStock = allProducts.reduce((sum, product) => sum + product.quantity, 0);
-            const lowStockItems = allProducts.filter(product => product.quantity <= 5 && product.quantity > 0).length;
-            const outOfStockItems = allProducts.filter(product => product.quantity === 0).length;
-
-            document.getElementById('totalProducts').textContent = totalProducts;
-            document.getElementById('totalStock').textContent = totalStock;
-            document.getElementById('lowStock').textContent = lowStockItems;
-            document.getElementById('outOfStock').textContent = outOfStockItems;
-        }
-
-        function getStockBadgeClass(quantity) {
-            if (quantity === 0) return 'out';
-            if (quantity <= 5) return 'low';
-            return 'high';
-        }
-
-        function getStockStatus(quantity) {
-            if (quantity === 0) return 'Tükendi';
-            if (quantity <= 5) return 'Düşük Stok';
-            return 'Stokta';
-        }
-
-        function clearFilters() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('modelFilter').value = '';
-            document.getElementById('sizeFilter').value = '';
-            document.getElementById('colorFilter').value = '';
-            document.getElementById('minStockInput').value = '';
-            document.getElementById('lowStockToggle').classList.remove('active');
-            applyFilters();
-        }
-
-        function toggleSortOrder() {
-            sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-            document.getElementById('sortOrder').textContent = sortOrder === 'asc' ? '↑ Artan' : '↓ Azalan';
-            applyFilters();
-        }
-
-        // Event listeners
-        document.getElementById('searchInput').addEventListener('input', applyFilters);
-        document.getElementById('modelFilter').addEventListener('change', applyFilters);
-        document.getElementById('sizeFilter').addEventListener('change', applyFilters);
-        document.getElementById('colorFilter').addEventListener('change', applyFilters);
-        document.getElementById('minStockInput').addEventListener('input', applyFilters);
-        document.getElementById('sortBy').addEventListener('change', function() {
-            sortBy = this.value;
-            applyFilters();
+            tbody.appendChild(row);
         });
+    }
 
-        document.getElementById('lowStockToggle').addEventListener('click', function() {
-            this.classList.toggle('active');
-            applyFilters();
-        });
-    </script>
+    function addProduct() {
+        const model = document.getElementById("model").value.trim();
+        const size = document.getElementById("size").value.trim();
+        const color = document.getElementById("color").value.trim();
+        const quantity = parseInt(document.getElementById("quantity").value);
+        if (!model || !size || !color || isNaN(quantity)) return;
+
+        const products = JSON.parse(localStorage.getItem("stockData") || "[]");
+        products.push({ model, size, color, quantity });
+        localStorage.setItem("stockData", JSON.stringify(products));
+        loadProducts();
+    }
+
+    function changeQty(index, delta) {
+        const products = JSON.parse(localStorage.getItem("stockData") || "[]");
+        products[index].quantity += delta;
+        if (products[index].quantity < 0) products[index].quantity = 0;
+        localStorage.setItem("stockData", JSON.stringify(products));
+        loadProducts();
+    }
+
+    function removeProduct(index) {
+        const products = JSON.parse(localStorage.getItem("stockData") || "[]");
+        products.splice(index, 1);
+        localStorage.setItem("stockData", JSON.stringify(products));
+        loadProducts();
+    }
+
+    function clearAll() {
+        if (confirm("Tüm stokları silmek istediğinize emin misiniz?")) {
+            localStorage.removeItem("stockData");
+            loadProducts();
+        }
+    }
+</script>
+
 </body>
 </html>
